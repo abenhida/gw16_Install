@@ -9,5 +9,6 @@
       "unzip_database": 0,
       "unzip_wildfly": 0,
       "unzip_keycloak": 0,
-      "create_GWInstall_dir": 1
+      "create_GWInstall_dir": 0,
+      "run_GWInstall_config": 1
     }

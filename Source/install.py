@@ -9,7 +9,7 @@ import UpdateMaster
 from procs import check_dir_file, check_version, parts_to_run, get_newest_file
 
 # cd C:\Users\ABenhida\Documents\Test1\Source
-# run on powershell: C:\Users\ABenhida\AppData\Local\Programs\Python\Python310-32\python.exe .\install.py
+# run on powershell: C:\Users\ABenhida\AppData\Local\Programs\Python\Python310\python.exe .\install.py
 
 # start timer
 start_time = datetime.datetime.now()
@@ -52,7 +52,7 @@ checkThese = {f'{loc_bat}download-pre-base-{version}.bat': 'file', f'{loc_bat}do
           f'{loc_bat}refresh-{version}.bat': 'file'}
 if not check_dir_file(checkThese):
     print(f'download batch files do not exist in: {loc_bat}')
-    sys.exit()
+    #sys.exit()
 
 #
 # ------------------------------------------------
@@ -66,14 +66,14 @@ print('\n....>  Verify the existance of these directories/files\n')
 checkThese = {f'{disk_target}:/{MM}.{NN}/AppTools': 'dir',
           f'{disk_target}:/{MM}.{NN}/AppServers/{wildfly_version}-CE.zip': 'file',
           f'{disk_target}:/{MM}.{NN}/AppServers/{keycloak_version}-CE.zip': 'file',
-          f'{disk_target}:/{MM}.{NN}/keycloak/unzip_database-{MM}-{NN}.DMP': 'file'}
+          f'{disk_target}:/{MM}.{NN}/keycloak/KEYCLOAK-{MM}-{NN}.DMP': 'file'}
 
-print (f'Check dir & files exist:{ check_dir_file(checkThese)}, {checkThese}')
+print(f'Check dir & files exist:{ check_dir_file(checkThese)}, {checkThese}')
 
 #
 # ------------------------------------------------
 if parts['run_pre_release_bat']:
-    print (f'..... running {loc_bat}download-pre-release-{version}.bat, please wait ......')
+    print(f'..... running {loc_bat}download-pre-release-{version}.bat, please wait ......')
     output = subprocess.getoutput(loc_bat+f"download-pre-release-{version}.bat")
     print('output:', output)
     #
@@ -224,6 +224,13 @@ if parts['unzip_keycloak']:
     print(f'... database files are unzipped to:{target_zip}')
 
 # to continue ..
+zips_target = f'E:\\17.0\\GWInstall\\releases\\{MM}.{NN}.{B}\\'
+
+Orig_zip = f'{db_source_zip}\\zips\\QAAP{site_code}\\'
+zip_source = f'{Orig_zip}\\QAAP{site_code}-install.zip'
+zip_target = f'{zips_target}\\QAAP{site_code}-install'
+
+#zips_target = f'E:\\Ahmed\\'
 if parts['create_GWInstall_dir']:
     path = f'{disk_target}:/{MM}.{NN}/GWInstall/releases/{MM}.{NN}.{B}'
     try:
@@ -241,9 +248,6 @@ if parts['create_GWInstall_dir']:
     Copy auth-server.zip and auth-server.zip.MD5 to E:\17.0\GWInstall\releases\17.0.42
     '''
     # we can make this more variable putting it in ini.config
-    zips_target = f'E:\\17.0\\GWInstall\\releases\\{MM}.{NN}.{B}\\'
-    zips_target = f'E:\\Ahmed\\'
-    Orig_zip = f'{db_source_zip}\\zips\\QAAP{site_code}\\'
     print(f'--> zips_target:{zips_target}, Orig_zip:{Orig_zip}')
     output = subprocess.getoutput(f'copy {Orig_zip}* {zips_target}')
     print('output:', output)
@@ -252,13 +256,15 @@ if parts['create_GWInstall_dir']:
     Install admin Gateway server and Keycloak server 
     extract-all [admin hostname]-install.zip to E:\17.0\GWInstall\releases\17.0.42\[admin hostname]-install  
     '''
-    zip_source = f'{Orig_zip}\\QAAP{site_code}-install.zip'
-    zip_target = f'{zips_target}\\QAAP{site_code}-install'
+
     with zipfile.ZipFile(zip_source, "r") as zip_ref:
         zip_ref.extractall(zip_target)
     print(f'... QAAP{site_code}-install.zip files are unzipped to:{zip_target}')
 
-    #-------
+
+#-------
+if parts['run_GWInstall_config']:
+
     '''
     Go to E:\17.0\GWInstall\releases\17.0.42\[admin hostname]-install
     cd E:\17.0\GWInstall\releases\17.0.42\QAAP7446-install    
@@ -266,8 +272,8 @@ if parts['create_GWInstall_dir']:
     print(f'changing directory to:{zip_target} ->:{os.chdir(zip_target)}')
     if os.getcwd() != zip_target:
         print(f'.... I am not at the right directory, config_loc:{zip_target}')
-        sys.exit()
-    print(f'++ curent directory:{os.getcwd()}, running decryption')
+        # sys.exit()    ??? to fix, when at the dir. it says not at
+    print(f'++ curent directory:{os.getcwd()}, running gateway Installation ...., please wait.')
     '''
     run:
     .\<hostname]-install>install-all.bat
