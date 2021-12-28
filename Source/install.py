@@ -22,7 +22,6 @@ config.read('../Configurations/config.ini')
 # where the batch "bat' files reside
 loc_bat = config.get('common info', 'loc_bat')
 
-#
 site_code = config.get('common info', 'site_code')
 site_name = config.get('common info', 'site_name')
 site = f'{site_code}-{site_name}'
@@ -32,7 +31,7 @@ disk_target = config.get('common info', 'disk_target')
 version = config.get('common info', 'version')
 MM, NN, B = version.split('.')
 
-
+download_folder = config.get('common info', 'download_folder')
 
 config_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\config'
 master_dir = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}'
@@ -136,9 +135,22 @@ if parts['decrypt_master_prop']:
     output = subprocess.getoutput('decrypt-master-prop.cmd ..\\'+site)
     print('output:', output)
 
+''' Now time to to merge your master prop file using Support Tool (ST)
+    Once you click download, it gets downloaded to "download" folder'''
+#
+''' moving the master prop from "download" folder to "7447-Ahmed" as example here'''
+download_folder = download_folder+"master-property_*"
+if parts['move_master_prop_downloaded_from_ST']:
+    print('... moving the master prop from "download" folder to "7447-Ahmed"')
+    get_newest_file(download_folder)
+    print(f'--> zips_target:{zips_target}, Orig_zip:{download_folder}')
+    #output = subprocess.getoutput(f'copy {Orig_zip}* {zips_target}')
+    #print('output:', output)
+
 
 #To verify:  look in output for string: master-property-template.properties is decrypted successfully
 
+if parts['move_master_prop_downloaded_from_ST']:
 
 # now the master property file is decrypted so you can modify it.
 # Modify the property file

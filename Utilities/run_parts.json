@@ -5,10 +5,11 @@
       "create_deployment_dir": 0,
       "decrypt_master_prop": 0,
       "run_master_prop_population": 0,
+      "move_master_prop_downloaded_from_ST": 1,
       "run_master_prop_config": 0,
       "unzip_database": 0,
       "unzip_wildfly": 0,
       "unzip_keycloak": 0,
       "create_GWInstall_dir": 0,
-      "run_GWInstall_config": 1
+      "run_GWInstall_config": 0
     }
