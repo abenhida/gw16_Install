@@ -4,6 +4,7 @@ import sys
 import zipfile
 import configparser
 import datetime
+import shutil
 
 import UpdateMaster
 from procs import check_dir_file, check_version, parts_to_run, get_newest_file
@@ -18,6 +19,7 @@ print(f'======= start time {start_time} ================')
 # Read the input dictionary to for config
 config = configparser.RawConfigParser()
 config.read('../Configurations/config.ini')
+fhmas = open('../Configurations/master_prop_dict.txt')
 
 # where the batch "bat' files reside
 loc_bat = config.get('common info', 'loc_bat')
@@ -33,6 +35,7 @@ MM, NN, B = version.split('.')
 
 download_folder = config.get('common info', 'download_folder')
 
+master_file = 'master-property-template.properties'
 config_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\config'
 master_dir = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}'
 wildfly_version = config.get('common info', 'wildfly_version')
@@ -99,6 +102,7 @@ if parts['run_refresh_bat']:
     print(check_version(f, version))
 
 # ------------------------------------------------
+master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
 if parts['create_deployment_dir']:
     print('.... Create the client deployment directory like the following ....')
     # E:\MM.NN\staging\rel-MM-NN\XXXX-ClientA
@@ -111,12 +115,10 @@ if parts['create_deployment_dir']:
     except OSError as error:
         print(f'....... Error creating directory:{error}, I will continue with existing dir')
         #sys.exit()  -- don't exit, continue
-    print(f'Copy ?:\AppServers\{wildfly_version}\standalone\data\ce\config\master-config\master-property-template.properties to:')
-    print(f'         {disk_target}:\\{MM}.{NN}\staging\\rel-{MM}-{NN}\\{site}\\')
+    print(f'  {path}')
 
     master_orig_loc = f"{disk_target}:\\AppServers\\{wildfly_version}\\standalone\\data\\ce\\config\\master-config\\"
-    master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
-    master_file = 'master-property-template.properties'
+    #master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
 
     output = subprocess.getoutput(f'copy {master_orig_loc}{master_file} {master_new_loc}{master_file}')
     print('output:', output)
@@ -135,48 +137,52 @@ if parts['decrypt_master_prop']:
     output = subprocess.getoutput('decrypt-master-prop.cmd ..\\'+site)
     print('output:', output)
 
-''' Now time to to merge your master prop file using Support Tool (ST)
-    Once you click download, it gets downloaded to "download" folder'''
-#
-''' moving the master prop from "download" folder to "7447-Ahmed" as example here'''
-download_folder = download_folder+"master-property_*"
+''' 
+------------------------------------------------------------------------------------
+Now time to to merge your master prop file using Support Tool (ST)
+    Once you click download, it gets downloaded to "download" folder
+moving the master prop from "download" folder to "7447-Ahmed" as example here
+------------------------------------------------------------------------------------
+'''
+downloaded_file = download_folder+"master-property*"
 if parts['move_master_prop_downloaded_from_ST']:
-    print('... moving the master prop from "download" folder to "7447-Ahmed"')
-    get_newest_file(download_folder)
-    print(f'--> zips_target:{zips_target}, Orig_zip:{download_folder}')
-    #output = subprocess.getoutput(f'copy {Orig_zip}* {zips_target}')
-    #print('output:', output)
+    print(f'... moving the master prop from file: {downloaded_file}')
+    f_n_p_downlded = get_newest_file(downloaded_file)
+    if not f_n_p_downlded:
+        print(f'master prop files does not exist in: {download_folder}')
+        sys.exit()
+    new_master_prop = f'master-pro{f_n_p_downlded.split("master-pro")[1]}'
+    try:
+        shutil.copy(f'{f_n_p_downlded}', f'{master_new_loc}\\{master_file}')
+    except EnvironmentError:
+        print(f".... Error moving TS downloaded master template to: {master_new_loc} ")
+    else:
+        print(f".... TS downloaded master template file moved to: {master_new_loc} ")
 
+'''
+------------------------------------------------------------------------------------
+now the master property file is decrypted so you can modify it.
+Modify the property file
 
-#To verify:  look in output for string: master-property-template.properties is decrypted successfully
-
-if parts['move_master_prop_downloaded_from_ST']:
-
-# now the master property file is decrypted so you can modify it.
-# Modify the property file
-
-# e.    Check the following file and it should be decrypted:
-#             E:\MM.NN\staing\rel-MM-NN\XXXX-ClientA\master-property-template.properties
-#....
-
+ i.e.  Check the following file and it should be decrypted:
+       E:\MM.NN\staing\rel-MM-NN\XXXX-ClientA\master-property-template.properties
+------------------------------------------------------------------------------------
+'''
 if parts['run_master_prop_population']:
     print('==========> running master properties file population ==========')
     # now I need to modify master template properties file
-    print('**** calling class updateMaster')
-    fh = open('../Configurations/master_prop_dict.txt')
     d = {}
-
-    UpdateMaster.UpdateMaster.load_dictionary(fh, d)
+    UpdateMaster.UpdateMaster.load_dictionary(fhmas, d)
     master_dest = master_dir+"\\master-property-template.properties"
     print("$$$$$$ whereTo_mast:", master_dest)
     UpdateMaster.UpdateMaster.modify_master(master_dest, d)
-
+    fhmas.close()
 '''
+------------------------------------------------------------------------------------
 Copy the merged master property files to the admin Gateway server at:
 E:\MM.NN\staing\rel-MM-NN\XXXX-ClientA\master-property-template.properties
+------------------------------------------------------------------------------------
 '''
-
-# ----------------------------------
 if parts['run_master_prop_config']:
     print('==========> running master properties config ===============')
     # Run the config now that master.property has been updated
@@ -190,11 +196,12 @@ if parts['run_master_prop_config']:
     print('output:', output)
 
 '''
+------------------------------------------------------------------------------------
 Verify E:\MM.NN\staging\rel-MM-NN\XXXX-ClientA\MM.NN.EE_MMDDYYYY-HHMISS
-print(f'Verify directories:{os.listdir()}')
 this one to figure out, as it will be generated later
 sometimes old versions are there too, I need to find the latest.
 call a function to do that ....
+------------------------------------------------------------------------------------
 '''
 db_versions_path = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\{version}_*'
 # first find the latest file:
@@ -204,15 +211,17 @@ if db_source_zip == None:
     print(f'db versions directory not found at: {db_source_zip}')
     sys.exit()
 
+'''
+------------------------------------------------------------------------------------
+this will unzip the zip file to the folder "zipF"
+if that zipF already  has files/folders it will update them
+if the folder "zipF" not there it will create it
+first find the latest file:
+------------------------------------------------------------------------------------
+'''
 if parts['unzip_database']:
-    '''
-    # this will unzip the zip file to the folder "zipF"
-    # if that zipF already  has files/folders it will update them
-    # if the folder "zipF" not there it will create it
-    # first find the latest file:
-    '''
-    db_source_zip = f'{db_source_zip}\\zips\\database.zip'
-    with zipfile.ZipFile(db_source_zip, "r") as zip_ref:
+    dbase_source_zip = f'{db_source_zip}\\zips\\database.zip'
+    with zipfile.ZipFile(dbase_source_zip, "r") as zip_ref:
         zip_ref.extractall(db_target_zip)
     print(f'... database files are unzipped to:{db_target_zip}')
 
@@ -242,7 +251,6 @@ Orig_zip = f'{db_source_zip}\\zips\\QAAP{site_code}\\'
 zip_source = f'{Orig_zip}\\QAAP{site_code}-install.zip'
 zip_target = f'{zips_target}\\QAAP{site_code}-install'
 
-#zips_target = f'E:\\Ahmed\\'
 if parts['create_GWInstall_dir']:
     path = f'{disk_target}:/{MM}.{NN}/GWInstall/releases/{MM}.{NN}.{B}'
     try:
@@ -254,10 +262,11 @@ if parts['create_GWInstall_dir']:
     print(f'.... directory created at :{path}')
 
     '''
+    Example (not real paths):
     go to: (E:\17.0\staging\rel-17-0\7446-Ahmed\17.0.42_20211005-191134\zips\QAAP7446
-    Copy [admin hostname].zip and [admin hostname].zip.MD5 to E:\17.0\GWInstall\releases\17.0.42 
-    Copy [admin hostname]-install.zip and [admin hostname]-install.zip.MD5 to E:\17.0\GWInstall\releases\17.0.42 
-    Copy auth-server.zip and auth-server.zip.MD5 to E:\17.0\GWInstall\releases\17.0.42
+    Copy [admin hostname].zip and [admin hostname].zip.MD5 to E:\17.0\GWInstall\releases\17.0.xx 
+    Copy [admin hostname]-install.zip and [admin hostname]-install.zip.MD5 to E:\17.0\GWInstall\releases\17.0.xx 
+    Copy auth-server.zip and auth-server.zip.MD5 to E:\17.0\GWInstall\releases\17.0.xx
     '''
     # we can make this more variable putting it in ini.config
     print(f'--> zips_target:{zips_target}, Orig_zip:{Orig_zip}')
@@ -268,13 +277,15 @@ if parts['create_GWInstall_dir']:
     Install admin Gateway server and Keycloak server 
     extract-all [admin hostname]-install.zip to E:\17.0\GWInstall\releases\17.0.42\[admin hostname]-install  
     '''
-
     with zipfile.ZipFile(zip_source, "r") as zip_ref:
         zip_ref.extractall(zip_target)
     print(f'... QAAP{site_code}-install.zip files are unzipped to:{zip_target}')
 
-
-#-------
+'''
+------------------------------------------------------------------------------------
+Gateway installation - time to run the install-all.bat script
+------------------------------------------------------------------------------------
+'''
 if parts['run_GWInstall_config']:
 
     '''
@@ -286,14 +297,12 @@ if parts['run_GWInstall_config']:
         print(f'.... I am not at the right directory, config_loc:{zip_target}')
         # sys.exit()    ??? to fix, when at the dir. it says not at
     print(f'++ curent directory:{os.getcwd()}, running gateway Installation ...., please wait.')
-    '''
-    run:
-    .\<hostname]-install>install-all.bat
-    '''
+
     output = subprocess.getoutput('install-all.bat')
     print('output:', output)
 
-#----------------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------------
 
 # time the execution took
-print(f'=========  It took:{datetime.datetime.now() - start_time} for this to run ============')
+print(f'=========  all done\n It took:{datetime.datetime.now() - start_time} for this to run ============')
