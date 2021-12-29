@@ -54,9 +54,8 @@ checkThese = {f'{loc_bat}download-pre-base-{version}.bat': 'file', f'{loc_bat}do
           f'{loc_bat}refresh-{version}.bat': 'file'}
 if not check_dir_file(checkThese):
     print(f'download batch files do not exist in: {loc_bat}')
-    #sys.exit()
+    sys.exit()
 
-#
 # ------------------------------------------------
 if parts['run_pre_base_bat']:
     print (f'..... running {loc_bat} download-pre-base-{version}.bat, please wait ......')
@@ -104,9 +103,7 @@ if parts['run_refresh_bat']:
 # ------------------------------------------------
 master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
 if parts['create_deployment_dir']:
-    print('.... Create the client deployment directory like the following ....')
-    # E:\MM.NN\staging\rel-MM-NN\XXXX-ClientA
-    # d = 'C:/17.0/staging/rel-17-0/7441-Ahmedb'
+    print('.... Creating client deployment directory, and copy master property ....')
     path = f'{disk_target}:/{MM}.{NN}/staging/rel-{MM}-{NN}/{site}'
 
     try:
@@ -114,7 +111,7 @@ if parts['create_deployment_dir']:
         print('.... Directory created ...')
     except OSError as error:
         print(f'....... Error creating directory:{error}, I will continue with existing dir')
-        #sys.exit()  -- don't exit, continue
+        #sys.exit()  -- don't exit, continue, exits already
     print(f'  {path}')
 
     master_orig_loc = f"{disk_target}:\\AppServers\\{wildfly_version}\\standalone\\data\\ce\\config\\master-config\\"
@@ -132,8 +129,6 @@ if parts['decrypt_master_prop']:
         print(f'.... I am not at the right directory, config_loc:{config_loc}')
         sys.exit()
     print(f'++ curent directory:{os.getcwd()}, running decryption')
-    # run:
-    #E:\MM.NN\staging\rel-MM-NN\config>decrypt-master-prop ..\7441-Ahmed
     output = subprocess.getoutput('decrypt-master-prop.cmd ..\\'+site)
     print('output:', output)
 
@@ -245,12 +240,13 @@ if parts['unzip_keycloak']:
     print(f'... database files are unzipped to:{target_zip}')
 
 # to continue ..
-zips_target = f'E:\\17.0\\GWInstall\\releases\\{MM}.{NN}.{B}\\'
+zips_target = f'E:\\17.0\\GWInstall\\releases\\{MM}.{NN}.{B}'
 
-Orig_zip = f'{db_source_zip}\\zips\\QAAP{site_code}\\'
+Orig_zip = f'{db_source_zip}\\zips\\QAAP{site_code}'
 zip_source = f'{Orig_zip}\\QAAP{site_code}-install.zip'
 zip_target = f'{zips_target}\\QAAP{site_code}-install'
 
+# check first if it exists already
 if parts['create_GWInstall_dir']:
     path = f'{disk_target}:/{MM}.{NN}/GWInstall/releases/{MM}.{NN}.{B}'
     try:
@@ -295,9 +291,8 @@ if parts['run_GWInstall_config']:
     print(f'changing directory to:{zip_target} ->:{os.chdir(zip_target)}')
     if os.getcwd() != zip_target:
         print(f'.... I am not at the right directory, config_loc:{zip_target}')
-        # sys.exit()    ??? to fix, when at the dir. it says not at
+        sys.exit()
     print(f'++ curent directory:{os.getcwd()}, running gateway Installation ...., please wait.')
-
     output = subprocess.getoutput('install-all.bat')
     print('output:', output)
 
