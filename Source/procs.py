@@ -2,6 +2,9 @@ import os.path
 import json
 import re
 import glob
+from selenium.webdriver.common.by import By
+from selenium import webdriver
+import time
 '''
 this proc verifies if the directory or file exists as it is supposed to
 returns 0/1
@@ -58,7 +61,6 @@ def parts_to_run(file):
     return dat
 
 
-
 '''
 this proc returns the latest file in a directory
 as there will be a file/files created on the fly and differ by timestamp
@@ -69,4 +71,30 @@ either returns "None" or latest file
 
 def get_newest_file(path):
     list_of_files = glob.glob(path)
-    return max(list_of_files, key=os.path.getctime)
+    try:
+        x = max(list_of_files, key=os.path.getctime)
+        return x
+    except ValueError:
+        return None
+
+
+'''
+This proc opens up the Chrome browser and downloads the build based on the
+version specified thr config.ini, download directory must be adjusted in config.ini
+if it is other than default (i.e downloads)
+'''
+
+
+def download_all_builds(build_url, build_version):
+    path = '../Drivers/chromedriver.exe'
+    driver = webdriver.Chrome(path)
+    driver.maximize_window()
+    driver.implicitly_wait(10)
+    driver.get(build_url)
+    for build in ['download-pre-base', 'download-pre-release', 'refresh']:
+        print('Build:', build)
+        driver.find_element_by_link_text(f'{build}-{build_version}').click()
+    time.sleep(15)
+    driver.close()
+    driver.quit()
+    return

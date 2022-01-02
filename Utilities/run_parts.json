@@ -1,4 +1,5 @@
     {
+      "download_builds": 1,
       "run_pre_base_bat": 0,
       "run_pre_release_bat": 0,
       "run_refresh_bat": 0,

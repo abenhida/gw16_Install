@@ -7,7 +7,11 @@ import datetime
 import shutil
 
 import UpdateMaster
-from procs import check_dir_file, check_version, parts_to_run, get_newest_file
+from procs import *
+# check_dir_file, check_version, parts_to_run, get_newest_file, download_all_builds
+from selenium.webdriver.common.by import By
+
+
 
 # cd C:\Users\ABenhida\Documents\Test1\Source
 # run on powershell: C:\Users\ABenhida\AppData\Local\Programs\Python\Python310\python.exe .\install.py
@@ -34,6 +38,7 @@ version = config.get('common info', 'version')
 MM, NN, B = version.split('.')
 
 download_folder = config.get('common info', 'download_folder')
+build_url = config.get('common info', 'build_url')
 
 master_file = 'master-property-template.properties'
 config_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\config'
@@ -49,6 +54,12 @@ if not parts:
     print('no data read - what parts to run, exiting .. ')
     sys.exit()
 #
+'''
+use Chrome browser to download the builds
+'''
+if parts['download_builds']:
+    download_all_builds(build_url, version)
+
 print('... Checking the ".bat" files exist for pre-base, pre-rel, refresh')
 checkThese = {f'{loc_bat}download-pre-base-{version}.bat': 'file', f'{loc_bat}download-pre-release-{version}.bat': 'file',
           f'{loc_bat}refresh-{version}.bat': 'file'}
@@ -201,10 +212,10 @@ call a function to do that ....
 db_versions_path = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\{version}_*'
 # first find the latest file:
 db_source_zip = get_newest_file(db_versions_path)
-print(f'db_source_zip:{db_source_zip} , db unzip target:{db_target_zip}')
 if db_source_zip == None:
-    print(f'db versions directory not found at: {db_source_zip}')
+    print(f'\n?... ERROR, Exiting, database source not found at:{db_versions_path}\n')
     sys.exit()
+print(f'db_source_zip:{db_source_zip} , db unzip target:{db_target_zip}')
 
 '''
 ------------------------------------------------------------------------------------
