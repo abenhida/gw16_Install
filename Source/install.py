@@ -1,4 +1,5 @@
 import subprocess
+
 import os.path
 import sys
 import zipfile
@@ -8,13 +9,6 @@ import shutil
 
 import UpdateMaster
 from procs import *
-# check_dir_file, check_version, parts_to_run, get_newest_file, download_all_builds
-from selenium.webdriver.common.by import By
-
-
-
-# cd C:\Users\ABenhida\Documents\Test1\Source
-# run on powershell: C:\Users\ABenhida\AppData\Local\Programs\Python\Python310\python.exe .\install.py
 
 # start timer
 start_time = datetime.datetime.now()
@@ -24,6 +18,7 @@ print(f'======= start time {start_time} ================')
 config = configparser.RawConfigParser()
 config.read('../Configurations/config.ini')
 fhmas = open('../Configurations/master_prop_dict.txt')
+logfile = '../Utilities/log'
 
 # where the batch "bat' files reside
 loc_bat = config.get('common info', 'loc_bat')
@@ -39,6 +34,7 @@ MM, NN, B = version.split('.')
 
 download_folder = config.get('common info', 'download_folder')
 build_url = config.get('common info', 'build_url')
+master_link = config.get('common info', 'master_link')
 
 master_file = 'master-property-template.properties'
 config_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\config'
@@ -53,59 +49,66 @@ parts = parts_to_run("../Utilities/run_parts.json")
 if not parts:
     print('no data read - what parts to run, exiting .. ')
     sys.exit()
-#
+
 '''
 use Chrome browser to download the builds
 '''
 if parts['download_builds']:
     download_all_builds(build_url, version)
 
+if parts['merge_master_template']:
+    merge_master(master_link, version)
+
+#
 print('... Checking the ".bat" files exist for pre-base, pre-rel, refresh')
-checkThese = {f'{loc_bat}download-pre-base-{version}.bat': 'file', f'{loc_bat}download-pre-release-{version}.bat': 'file',
-          f'{loc_bat}refresh-{version}.bat': 'file'}
+checkThese = {f'{loc_bat}download-pre-base-{version}.bat': 'file',
+              f'{loc_bat}download-pre-release-{version}.bat': 'file',
+              f'{loc_bat}refresh-{version}.bat': 'file'}
 if not check_dir_file(checkThese):
     print(f'download batch files do not exist in: {loc_bat}')
     sys.exit()
 
 # ------------------------------------------------
 if parts['run_pre_base_bat']:
-    print (f'..... running {loc_bat} download-pre-base-{version}.bat, please wait ......')
-    output = subprocess.getoutput(loc_bat+f"download-pre-base-{version}.bat")
-    print('output:', output)
-    print('------- No need to check for errors here -----------------')
+    print(f'..... running {loc_bat}download-pre-base-{version}.bat, please wait ......')
+    # output = subprocess.getoutput(loc_bat+f"download-pre-base-{version}.bat")
+    cmd = loc_bat + f'download-pre-base-{version}.bat'
+    run_cmd(cmd)
+
+
 #
 print('\n....>  Verify the existance of these directories/files\n')
 checkThese = {f'{disk_target}:/{MM}.{NN}/AppTools': 'dir',
-          f'{disk_target}:/{MM}.{NN}/AppServers/{wildfly_version}-CE.zip': 'file',
-          f'{disk_target}:/{MM}.{NN}/AppServers/{keycloak_version}-CE.zip': 'file',
-          f'{disk_target}:/{MM}.{NN}/keycloak/KEYCLOAK-{MM}-{NN}.DMP': 'file'}
+              f'{disk_target}:/{MM}.{NN}/AppServers/{wildfly_version}-CE.zip': 'file',
+              f'{disk_target}:/{MM}.{NN}/AppServers/{keycloak_version}-CE.zip': 'file',
+              f'{disk_target}:/{MM}.{NN}/keycloak/KEYCLOAK-{MM}-{NN}.DMP': 'file'}
 
-print(f'Check dir & files exist:{ check_dir_file(checkThese)}, {checkThese}')
+print(f'Check dir & files exist:{check_dir_file(checkThese)}, {checkThese}')
 
 #
 # ------------------------------------------------
 if parts['run_pre_release_bat']:
     print(f'..... running {loc_bat}download-pre-release-{version}.bat, please wait ......')
-    output = subprocess.getoutput(loc_bat+f"download-pre-release-{version}.bat")
-    print('output:', output)
+    cmd = loc_bat + f"download-pre-release-{version}.bat"
+    run_cmd(cmd)
+
     #
     f_version = f'{disk_target}:\\{MM}.{NN}\\{MM}.{NN}.{B}\\GWInstall\\rel-{MM}-{NN}\\version.txt'
     checkThese = {f'{f_version}': 'file'}
-    print (f'Check dir & files exist:{ check_dir_file(checkThese)}, {checkThese}')
+    print(f'Check dir & files exist:{check_dir_file(checkThese)}, {checkThese}')
 
     # Verify version format
     if not check_version(f_version, version):
-      print(f'.... Wrong version format {version}, expecting {version}')
-      sys.exit()
+        print(f'.... Wrong version format {version}, expecting {version}')
+        sys.exit()
     print(f'.... correct version format {version}, same as expected: {version}')
 
 # ------------------------------------------------
 # Refresh staging directory on admin Gateway server
 if parts['run_refresh_bat']:
     print(f'... running {loc_bat} refresh-{version}.bat, please wait ....')
-    output = subprocess.getoutput(loc_bat+f"refresh-{version}.bat")
-    print('output:', output)
-
+    cmd = loc_bat + f"refresh-{version}.bat"
+    run_cmd(cmd)
     #
     checks = {f'{disk_target}:/{MM}.{NN}/staging/rel-{MM}-{NN}/version.txt': 'dir'}
     f = f'{disk_target}:/{MM}.{NN}/staging/rel-{MM}-{NN}/version.txt'
@@ -122,26 +125,23 @@ if parts['create_deployment_dir']:
         print('.... Directory created ...')
     except OSError as error:
         print(f'....... Error creating directory:{error}, I will continue with existing dir')
-        #sys.exit()  -- don't exit, continue, exits already
+        # sys.exit()  -- don't exit, continue, exits already
     print(f'  {path}')
 
     master_orig_loc = f"{disk_target}:\\AppServers\\{wildfly_version}\\standalone\\data\\ce\\config\\master-config\\"
-    #master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
+    # master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
 
     output = subprocess.getoutput(f'copy {master_orig_loc}{master_file} {master_new_loc}{master_file}')
-    print('output:', output)
+    print(f'output of copy master, output {output}')
 
-
-#-------------------------------------------------
+# -------------------------------------------------
 if parts['decrypt_master_prop']:
     # c.    Go to E:\MM.NN\staging\rel-MM-NN\config
-    print(f'changing directory to:{config_loc} ->:{os.chdir(config_loc)}')
-    if os.getcwd() != config_loc:
-        print(f'.... I am not at the right directory, config_loc:{config_loc}')
-        sys.exit()
+    print(f'changing directory to:{config_loc}')
+    change_dir(config_loc)
     print(f'++ curent directory:{os.getcwd()}, running decryption')
-    output = subprocess.getoutput('decrypt-master-prop.cmd ..\\'+site)
-    print('output:', output)
+    output = subprocess.getoutput('decrypt-master-prop.cmd ..\\' + site)
+    print(f'output of copy master, output {output}')
 
 ''' 
 ------------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ Now time to to merge your master prop file using Support Tool (ST)
 moving the master prop from "download" folder to "7447-Ahmed" as example here
 ------------------------------------------------------------------------------------
 '''
-downloaded_file = download_folder+"master-property*"
+downloaded_file = download_folder + "master-property*"
 if parts['move_master_prop_downloaded_from_ST']:
     print(f'... moving the master prop from file: {downloaded_file}')
     f_n_p_downlded = get_newest_file(downloaded_file)
@@ -179,7 +179,7 @@ if parts['run_master_prop_population']:
     # now I need to modify master template properties file
     d = {}
     UpdateMaster.UpdateMaster.load_dictionary(fhmas, d)
-    master_dest = master_dir+"\\master-property-template.properties"
+    master_dest = master_dir + "\\master-property-template.properties"
     print("$$$$$$ whereTo_mast:", master_dest)
     UpdateMaster.UpdateMaster.modify_master(master_dest, d)
     fhmas.close()
@@ -193,13 +193,13 @@ if parts['run_master_prop_config']:
     print('==========> running master properties config ===============')
     # Run the config now that master.property has been updated
     # E:\MM.NN\staging\rel-MM-NN\config>config ..\XXXX-ClientA
-    print(f'changing directory to:{config_loc} ->:{os.chdir(config_loc)}')
-    if os.getcwd() != config_loc:
-        print(f'.... not at the right directory, config_loc:{config_loc}, curdir:{os.getcwd()}, quiting')
-        sys.exit()
+    print(f'changing directory to:{config_loc}')
+    change_dir(config_loc)
     print(f'...... I am at: {os.getcwd()}. running the config for master.property file ... ')
-    output = subprocess.getoutput('config.cmd ..\\'+site)
-    print('output:', output)
+    #output = subprocess.getoutput('config.cmd ..\\' + site)
+    cmd = 'config.cmd ..\\' + site
+    run_cmd(cmd)
+
 
 '''
 ------------------------------------------------------------------------------------
@@ -210,12 +210,7 @@ call a function to do that ....
 ------------------------------------------------------------------------------------
 '''
 db_versions_path = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\{version}_*'
-# first find the latest file:
-db_source_zip = get_newest_file(db_versions_path)
-if db_source_zip == None:
-    print(f'\n?... ERROR, Exiting, database source not found at:{db_versions_path}\n')
-    sys.exit()
-print(f'db_source_zip:{db_source_zip} , db unzip target:{db_target_zip}')
+
 
 '''
 ------------------------------------------------------------------------------------
@@ -226,6 +221,9 @@ first find the latest file:
 ------------------------------------------------------------------------------------
 '''
 if parts['unzip_database']:
+    # first find the latest database zip files:
+    db_source_zip = get_latest_database(db_versions_path)
+    print(':- .... starting - unzip_database -')
     dbase_source_zip = f'{db_source_zip}\\zips\\database.zip'
     with zipfile.ZipFile(dbase_source_zip, "r") as zip_ref:
         zip_ref.extractall(db_target_zip)
@@ -240,7 +238,6 @@ if parts['unzip_wildfly']:
         zip_ref.extractall(target_zip)
     print(f'... database files are unzipped to:{target_zip}')
 
-
 if parts['unzip_keycloak']:
     zip_source = f'{disk_target}:\\{MM}.{NN}\\AppServers\\{keycloak_version}-CE.zip'
     target_zip = f'{disk_target}:\\AppServers\\{keycloak_version}'
@@ -252,20 +249,23 @@ if parts['unzip_keycloak']:
 
 # to continue ..
 zips_target = f'E:\\17.0\\GWInstall\\releases\\{MM}.{NN}.{B}'
-
-Orig_zip = f'{db_source_zip}\\zips\\QAAP{site_code}'
-zip_source = f'{Orig_zip}\\QAAP{site_code}-install.zip'
 zip_target = f'{zips_target}\\QAAP{site_code}-install'
 
 # check first if it exists already
 if parts['create_GWInstall_dir']:
+    # first find the latest database zip files:
+    db_source_zip = get_latest_database(db_versions_path)
+    Orig_zip = f'{db_source_zip}\\zips\\QAAP{site_code}'
+    zip_source = f'{Orig_zip}\\QAAP{site_code}-install.zip'
+
     path = f'{disk_target}:/{MM}.{NN}/GWInstall/releases/{MM}.{NN}.{B}'
+    # need to check if dir already exists, skip creating it
     try:
         os.mkdir(path)
         print('.... Directory created ...')
     except OSError as error:
         print(f'....... Error creating directory:{error}')
-        #sys.exit()
+        # sys.exit()
     print(f'.... directory created at :{path}')
 
     '''
@@ -277,8 +277,8 @@ if parts['create_GWInstall_dir']:
     '''
     # we can make this more variable putting it in ini.config
     print(f'--> zips_target:{zips_target}, Orig_zip:{Orig_zip}')
-    output = subprocess.getoutput(f'copy {Orig_zip}* {zips_target}')
-    print('output:', output)
+    output = subprocess.getoutput(f'copy {Orig_zip}\\* {zips_target}')
+    print(f'copy output:{output}')
 
     '''
     Install admin Gateway server and Keycloak server 
@@ -294,19 +294,14 @@ Gateway installation - time to run the install-all.bat script
 ------------------------------------------------------------------------------------
 '''
 if parts['run_GWInstall_config']:
-
     '''
     Go to E:\17.0\GWInstall\releases\17.0.42\[admin hostname]-install
     cd E:\17.0\GWInstall\releases\17.0.42\QAAP7446-install    
     '''
-    print(f'changing directory to:{zip_target} ->:{os.chdir(zip_target)}')
-    if os.getcwd() != zip_target:
-        print(f'.... I am not at the right directory, config_loc:{zip_target}')
-        sys.exit()
-    print(f'++ curent directory:{os.getcwd()}, running gateway Installation ...., please wait.')
-    output = subprocess.getoutput('install-all.bat')
-    print('output:', output)
-
+    change_dir(zip_target)
+    print(f'++ running gateway Installation ...., please wait.')
+    cmd = 'install-all.bat'
+    run_cmd(cmd)
 
 # ----------------------------------------------------------------------------------------------
 

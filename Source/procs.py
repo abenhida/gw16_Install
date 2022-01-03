@@ -2,9 +2,14 @@ import os.path
 import json
 import re
 import glob
+import sys
+import subprocess
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 import time
+
+from selenium.webdriver.support import wait
+
 '''
 this proc verifies if the directory or file exists as it is supposed to
 returns 0/1
@@ -79,6 +84,40 @@ def get_newest_file(path):
 
 
 '''
+since this getting called more than one time, decided to put it in this 
+proc
+'''
+
+
+def get_latest_database(db_path):
+    db_source_zip = get_newest_file(db_path)
+    if db_source_zip is None:
+        print(f'\n?... ERROR, Exiting, database source not found at:{db_path}\n')
+        sys.exit()
+    return db_source_zip
+
+
+def run_cmd(command):
+    out = subprocess.call(command)
+    if out is None:
+        print(f'?... ERROR running command:{command}, out:{out}')
+        sys.exit()
+    else:
+        print(f'--- Successfully run command:{command}, out:{out} -----\n\n')
+    return
+
+
+def change_dir(moveto):
+    print(f'changing directory to:{moveto}')
+    try:
+        r = os.chdir(moveto)
+        print(f'.. moved to: {os.getcwd()}')
+    except FileNotFoundError:
+        print(f'.. ERROR, not able to cd to:{moveto}')
+        sys.exit()
+
+
+'''
 This proc opens up the Chrome browser and downloads the build based on the
 version specified thr config.ini, download directory must be adjusted in config.ini
 if it is other than default (i.e downloads)
@@ -95,6 +134,24 @@ def download_all_builds(build_url, build_version):
         print('Build:', build)
         driver.find_element_by_link_text(f'{build}-{build_version}').click()
     time.sleep(15)
+    driver.close()
+    driver.quit()
+    return
+
+
+def merge_master(build_url, build_version):
+    path = '../Drivers/chromedriver.exe'
+    driver = webdriver.Chrome(path)
+    driver.maximize_window()
+    driver.implicitly_wait(10)
+    driver.get(f'{build_url}{build_version}')
+    time.sleep(5)
+    # driver.find_element_by_xpath("Click to upload").send_keys("../Configurations/config.ini")
+    # driver.find_element_by_xpath('//input[@id="items"]').click()
+    driver.find_element_by_class_name("uploadBoxMain").send_keys(
+        "C:/Users/ABenhida/Downloads/master-property-template_1")
+
+    time.sleep(5)
     driver.close()
     driver.quit()
     return
