@@ -139,18 +139,17 @@ def download_all_builds(build_url, build_version):
     return
 
 
-def merge_master(build_url, build_version):
+def merge_master(build_url, build_version, master_path):
     path = '../Drivers/chromedriver.exe'
     driver = webdriver.Chrome(path)
     driver.maximize_window()
     driver.implicitly_wait(10)
     driver.get(f'{build_url}{build_version}')
     time.sleep(5)
-    # driver.find_element_by_xpath("Click to upload").send_keys("../Configurations/config.ini")
-    # driver.find_element_by_xpath('//input[@id="items"]').click()
-    driver.find_element_by_class_name("uploadBoxMain").send_keys(
-        "C:/Users/ABenhida/Downloads/master-property-template_1")
-
+    driver.find_element_by_xpath("//input[@type='file']").send_keys("C:/Users/ABenhida/Downloads/master-property-template_1.properties")
+    driver.find_element_by_xpath("//button[@class='btn btn-primary']").click()
+    time.sleep(2)
+    driver.find_element_by_xpath("//button[@class='btn btn-primary']").click()
     time.sleep(5)
     driver.close()
     driver.quit()
