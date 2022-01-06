@@ -3,31 +3,34 @@
 # All what you need to change here is the Build version (42 to ??)
 # Unless moving completely to different release,..
 #--------------------------------------------------------------------
-site.name=7447-ahmed
-site.code=7447
+site.name=7441-ahmed
+site.code=7441
 install.profile=test
 server.number=2
+
+## GW Version
+gateway.version=17.0.45
 
 server.db.os=W2019
 server.db.hostname=QAAP71165
 server.db.FQDN=
 server.db.ip=10.200.71.165
 server.db.port=10165
-server.db.user=gw7447_17_0_45_English
-server.db.password=gw7447_17_0_45_English
+server.db.user=gw7441_17_0_45_English
+server.db.password=gw7441_17_0_45_English
 server.db.sid=CEDB0001
 server.db.dataguard=true
 
 ## Keycloak user setup
-server.db.keycloak.user=keycloak7447_17_0_45
-server.db.keycloak.password=keycloak7447_17_0_45
+server.db.keycloak.user=keycloak7441_17_0_45
+server.db.keycloak.password=keycloak7441_17_0_45
 
 ## server numbers should match the number specified in server.number
 ## Admin server parameters
 server.1.os=windows_2016_A
-server.1.hostname=QAAP7447
+server.1.hostname=QAAP7441
 server.1.FQDN=
-server.1.ip.1=10.200.74.47
+server.1.ip.1=10.200.74.41
 server.1.ip.2=
 server.1.http.port=20043
 ## Keystore
@@ -38,8 +41,13 @@ server.2.os=windows_2019_A
 server.2.hostname=QAAP7446
 server.2.ip.1=10.200.74.46
 
-## GW Version
-gateway.version=17.0.45
+auth.server.ip=10.200.74.41
+auth.server.FQDN=
+auth.server.port=38080
+auth.server.ssl.required=true
+auth.server.ssl.port=38443
+
+server.cert.ip=10.200.74.41
 
 gateway.localization.language=en
 gateway.localization.country=US

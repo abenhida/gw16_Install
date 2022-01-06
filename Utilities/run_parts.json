@@ -5,7 +5,7 @@
       "run_refresh_bat": 0,
       "create_deployment_dir": 0,
       "decrypt_master_prop": 0,
-      "merge_master_template": 1,
+      "merge_master_template": 0,
       "move_master_prop_downloaded_from_ST": 0,
       "run_master_prop_population": 0,
       "run_master_prop_config": 0,

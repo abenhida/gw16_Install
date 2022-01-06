@@ -146,7 +146,7 @@ def merge_master(build_url, build_version, master_path):
     driver.implicitly_wait(10)
     driver.get(f'{build_url}{build_version}')
     time.sleep(5)
-    driver.find_element_by_xpath("//input[@type='file']").send_keys("C:/Users/ABenhida/Downloads/master-property-template_1.properties")
+    driver.find_element_by_xpath("//input[@type='file']").send_keys(master_path)
     driver.find_element_by_xpath("//button[@class='btn btn-primary']").click()
     time.sleep(2)
     driver.find_element_by_xpath("//button[@class='btn btn-primary']").click()

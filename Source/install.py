@@ -35,6 +35,7 @@ MM, NN, B = version.split('.')
 download_folder = config.get('common info', 'download_folder')
 build_url = config.get('common info', 'build_url')
 master_link = config.get('common info', 'master_link')
+master_prop_name = config.get('common info', 'master_prop_name')
 
 master_file = 'master-property-template.properties'
 config_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\config'
@@ -55,9 +56,6 @@ use Chrome browser to download the builds
 '''
 if parts['download_builds']:
     download_all_builds(build_url, version)
-
-if parts['merge_master_template']:
-    merge_master(master_link, version)
 
 #
 print('... Checking the ".bat" files exist for pre-base, pre-rel, refresh')
@@ -116,6 +114,10 @@ if parts['run_refresh_bat']:
 
 # ------------------------------------------------
 master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
+print(f'... I will be loading "{master_new_loc}\\{master_prop_name}", to tool ... wait')
+if parts['merge_master_template']:
+    merge_master(master_link, version, f'{master_new_loc}\{master_prop_name}')
+
 if parts['create_deployment_dir']:
     print('.... Creating client deployment directory, and copy master property ....')
     path = f'{disk_target}:/{MM}.{NN}/staging/rel-{MM}-{NN}/{site}'
