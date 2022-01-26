@@ -1,53 +1,48 @@
 #--------------------------------------------------------------------
 # Assuming that your setup does not change
 # All what you need to change here is the Build version (42 to ??)
+# database schema name if you are installing db from scratch
+# and language
 # Unless moving completely to different release,..
 #--------------------------------------------------------------------
-site.name=7441-ahmed
-site.code=7441
-install.profile=test
-server.number=2
+site.name=7446-ahmed
+site.code=7446
 
 ## GW Version
 gateway.version=17.0.45
+gateway.localization.language=fr
+gateway.localization.country=FR
+
+install.profile=test
+server.number=2
 
 server.db.os=W2019
 server.db.hostname=QAAP71165
 server.db.FQDN=
 server.db.ip=10.200.71.165
 server.db.port=10165
-server.db.user=gw7441_17_0_45_English
-server.db.password=gw7441_17_0_45_English
+server.db.user=gw7446_17_0_45_French
+server.db.password=gw7446_17_0_45_French
 server.db.sid=CEDB0001
 server.db.dataguard=true
 
 ## Keycloak user setup
-server.db.keycloak.user=keycloak7441_17_0_45
-server.db.keycloak.password=keycloak7441_17_0_45
+server.db.keycloak.user=keycloak7446_17_0_45
+server.db.keycloak.password=keycloak7446_17_0_45
 
 ## server numbers should match the number specified in server.number
 ## Admin server parameters
-server.1.os=windows_2016_A
-server.1.hostname=QAAP7441
+server.1.os=windows_2019_A
+server.1.hostname=QAAP7446
 server.1.FQDN=
-server.1.ip.1=10.200.74.41
+server.1.ip.1=10.200.74.46
 server.1.ip.2=
 server.1.http.port=20043
 ## Keystore
 keystore.alias=cegwkey
 
 ## Other server parameters
-server.2.os=windows_2019_A
-server.2.hostname=QAAP7446
-server.2.ip.1=10.200.74.46
+server.2.os=windows_2016_A
+server.2.hostname=QAAP7443
+server.2.ip.1=10.200.74.43
 
-auth.server.ip=10.200.74.41
-auth.server.FQDN=
-auth.server.port=38080
-auth.server.ssl.required=true
-auth.server.ssl.port=38443
-
-server.cert.ip=10.200.74.41
-
-gateway.localization.language=en
-gateway.localization.country=US

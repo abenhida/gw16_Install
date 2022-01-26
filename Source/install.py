@@ -54,6 +54,7 @@ if not parts:
 '''
 use Chrome browser to download the builds
 '''
+print('---   Running: download_builds')
 if parts['download_builds']:
     download_all_builds(build_url, version)
 
@@ -67,6 +68,7 @@ if not check_dir_file(checkThese):
     sys.exit()
 
 # ------------------------------------------------
+print('---   Running: run_pre_base_bat')
 if parts['run_pre_base_bat']:
     print(f'..... running {loc_bat}download-pre-base-{version}.bat, please wait ......')
     # output = subprocess.getoutput(loc_bat+f"download-pre-base-{version}.bat")
@@ -85,6 +87,7 @@ print(f'Check dir & files exist:{check_dir_file(checkThese)}, {checkThese}')
 
 #
 # ------------------------------------------------
+print('---   Running: run_pre_release_bat')
 if parts['run_pre_release_bat']:
     print(f'..... running {loc_bat}download-pre-release-{version}.bat, please wait ......')
     cmd = loc_bat + f"download-pre-release-{version}.bat"
@@ -103,6 +106,7 @@ if parts['run_pre_release_bat']:
 
 # ------------------------------------------------
 # Refresh staging directory on admin Gateway server
+print('---   Running: run_refresh_bat')
 if parts['run_refresh_bat']:
     print(f'... running {loc_bat} refresh-{version}.bat, please wait ....')
     cmd = loc_bat + f"refresh-{version}.bat"
@@ -112,16 +116,16 @@ if parts['run_refresh_bat']:
     f = f'{disk_target}:/{MM}.{NN}/staging/rel-{MM}-{NN}/version.txt'
     print(check_version(f, version))
 
-# ------------------------------------------------
+
+'''
+create client deployment directory and copy master properties file 
+from master_orig_loc to new_loc
+'''
 master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
-print(f'... I will be loading "{master_new_loc}\\{master_prop_name}", to tool ... wait')
-if parts['merge_master_template']:
-    merge_master(master_link, version, f'{master_new_loc}\{master_prop_name}')
-
+print('---   Running: create_deployment_dir')
 if parts['create_deployment_dir']:
-    print('.... Creating client deployment directory, and copy master property ....')
+    print('.... Creating client deployment directory ....')
     path = f'{disk_target}:/{MM}.{NN}/staging/rel-{MM}-{NN}/{site}'
-
     try:
         os.mkdir(path)
         print('.... Directory created ...')
@@ -132,11 +136,18 @@ if parts['create_deployment_dir']:
 
     master_orig_loc = f"{disk_target}:\\AppServers\\{wildfly_version}\\standalone\\data\\ce\\config\\master-config\\"
     # master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
+    # first check if the file is in there
+    checkThese = {f'{master_orig_loc}{master_file}': 'file'}
+    print(f'... copying master file from:{master_orig_loc}, to:{master_new_loc}')
+    print(f'... Checking if master file exist:{check_dir_file(checkThese)}, {checkThese}')
 
     output = subprocess.getoutput(f'copy {master_orig_loc}{master_file} {master_new_loc}{master_file}')
     print(f'output of copy master, output {output}')
 
-# -------------------------------------------------
+
+
+# ------------------------------------------------
+print('---   Running: decrypt_master_prop')
 if parts['decrypt_master_prop']:
     # c.    Go to E:\MM.NN\staging\rel-MM-NN\config
     print(f'changing directory to:{config_loc}')
@@ -145,6 +156,15 @@ if parts['decrypt_master_prop']:
     output = subprocess.getoutput('decrypt-master-prop.cmd ..\\' + site)
     print(f'output of copy master, output {output}')
 
+# ------------------------------------------------
+#master_new_loc = f'{disk_target}:\\{MM}.{NN}\\staging\\rel-{MM}-{NN}\\{site}\\'
+print(f'... I will be loading "{master_new_loc}\\{master_prop_name}", to tool ... wait')
+
+print('---   Running: merge_master_template')
+if parts['merge_master_template']:
+    merge_master(master_link, version, f'{master_new_loc}{master_prop_name}')
+
+
 ''' 
 ------------------------------------------------------------------------------------
 Now time to to merge your master prop file using Support Tool (ST)
@@ -152,7 +172,9 @@ Now time to to merge your master prop file using Support Tool (ST)
 moving the master prop from "download" folder to "7447-Ahmed" as example here
 ------------------------------------------------------------------------------------
 '''
+
 downloaded_file = download_folder + "master-property*"
+print('---   Running: move_master_prop_downloaded_from_ST')
 if parts['move_master_prop_downloaded_from_ST']:
     print(f'... moving the master prop from file: {downloaded_file}')
     f_n_p_downlded = get_newest_file(downloaded_file)
@@ -171,11 +193,11 @@ if parts['move_master_prop_downloaded_from_ST']:
 ------------------------------------------------------------------------------------
 now the master property file is decrypted so you can modify it.
 Modify the property file
-
  i.e.  Check the following file and it should be decrypted:
        E:\MM.NN\staing\rel-MM-NN\XXXX-ClientA\master-property-template.properties
 ------------------------------------------------------------------------------------
 '''
+print('---   Running: run_master_prop_population')
 if parts['run_master_prop_population']:
     print('==========> running master properties file population ==========')
     # now I need to modify master template properties file
@@ -191,6 +213,7 @@ Copy the merged master property files to the admin Gateway server at:
 E:\MM.NN\staing\rel-MM-NN\XXXX-ClientA\master-property-template.properties
 ------------------------------------------------------------------------------------
 '''
+print('---   Running: run_master_prop_config')
 if parts['run_master_prop_config']:
     print('==========> running master properties config ===============')
     # Run the config now that master.property has been updated
@@ -222,6 +245,7 @@ if the folder "zipF" not there it will create it
 first find the latest file:
 ------------------------------------------------------------------------------------
 '''
+print('---   Running: unzip_database')
 if parts['unzip_database']:
     # first find the latest database zip files:
     db_source_zip = get_latest_database(db_versions_path)
@@ -231,6 +255,7 @@ if parts['unzip_database']:
         zip_ref.extractall(db_target_zip)
     print(f'... database files are unzipped to:{db_target_zip}')
 
+print('---   Running: unzip_wildfly')
 if parts['unzip_wildfly']:
     zip_source = f'{disk_target}:\\{MM}.{NN}\\AppServers\\{wildfly_version}-CE.zip'
     target_zip = f'{disk_target}:\\AppServers\\{wildfly_version}'
@@ -240,6 +265,7 @@ if parts['unzip_wildfly']:
         zip_ref.extractall(target_zip)
     print(f'... database files are unzipped to:{target_zip}')
 
+print('---   Running: unzip_keycloak')
 if parts['unzip_keycloak']:
     zip_source = f'{disk_target}:\\{MM}.{NN}\\AppServers\\{keycloak_version}-CE.zip'
     target_zip = f'{disk_target}:\\AppServers\\{keycloak_version}'
@@ -254,6 +280,7 @@ zips_target = f'E:\\17.0\\GWInstall\\releases\\{MM}.{NN}.{B}'
 zip_target = f'{zips_target}\\QAAP{site_code}-install'
 
 # check first if it exists already
+print('---   Running: create_GWInstall_dir')
 if parts['create_GWInstall_dir']:
     # first find the latest database zip files:
     db_source_zip = get_latest_database(db_versions_path)
@@ -295,6 +322,7 @@ if parts['create_GWInstall_dir']:
 Gateway installation - time to run the install-all.bat script
 ------------------------------------------------------------------------------------
 '''
+print('---   Running: run_GWInstall_config')
 if parts['run_GWInstall_config']:
     '''
     Go to E:\17.0\GWInstall\releases\17.0.42\[admin hostname]-install
